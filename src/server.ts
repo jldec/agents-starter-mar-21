@@ -9,7 +9,7 @@ import {
   streamText,
   type StreamTextOnFinishCallback,
 } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createWorkersAI } from "workers-ai-provider";
 import { processToolCalls } from "./utils";
 import { tools, executions } from "./tools";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -40,10 +40,7 @@ export class Chat extends AIChatAgent<Env> {
             executions,
           });
 
-          // Initialize OpenAI client with API key from environment
-          const openai = createOpenAI({
-            apiKey: this.env.OPENAI_API_KEY,
-          });
+          const workersai = createWorkersAI({ binding: this.env.AI });
 
           // Cloudflare AI Gateway
           // const openai = createOpenAI({
@@ -53,13 +50,8 @@ export class Chat extends AIChatAgent<Env> {
 
           // Stream the AI response using GPT-4
           const result = streamText({
-            model: openai("gpt-4o-2024-11-20"),
-            system: `You are a helpful assistant that can do various tasks... 
-
-${unstable_getSchedulePrompt({ date: new Date() })}
-
-If the user asks to schedule a task, use the schedule tool to schedule the task.
-`,
+            model: workersai("@cf/meta/llama-3-8b-instruct-awq"),
+            system: `You are a helpful assistant...`,
             messages: processedMessages,
             tools,
             onFinish,
@@ -95,12 +87,6 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
  */
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    if (!env.OPENAI_API_KEY) {
-      console.error(
-        "OPENAI_API_KEY is not set, don't forget to set it locally in .dev.vars, and use `wrangler secret bulk .dev.vars` to upload it to production"
-      );
-      return new Response("OPENAI_API_KEY is not set", { status: 500 });
-    }
     return (
       // Route the request to our agent or return 404 if not found
       (await routeAgentRequest(request, env)) ||
