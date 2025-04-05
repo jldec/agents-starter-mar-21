@@ -1,5 +1,8 @@
 # agents-starter-mar-21
 
+> [!NOTE]
+> Since updating the dependencies on April 5, 2025, issue [#3761](https://github.com/cloudflare/workerd/issues/3761) is no longer reproducible and this repo is archived.
+
 Another repro for https://github.com/cloudflare/workerd/issues/3761
 
 I seem to be able to reproduce the issue quite reliably
